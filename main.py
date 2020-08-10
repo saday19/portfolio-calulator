@@ -1,14 +1,15 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+import robinhood_login_api as rai
 import time
 
 def main():
     attempts = 0
     driver = setup_driver()
-    wait_for_login()
-    wait_for_verification()
-    locate_stocks()
-    print("execution over")
+    successful_login = rai.login(driver, "samuel_adam_day@yahoo.com", "Cd77889900!!")
+    wait_for_login(driver, successful_login)
+    wait_for_verification(driver)
+    locate_stocks(driver, attempts)
     driver.close()
 
 def setup_driver():
@@ -16,32 +17,45 @@ def setup_driver():
     driver.get("https://robinhood.com/login")
     return driver
 
-def wait_for_login():
+def wait_for_login(driver, login_successful):
     logged_in = False
+    if not login_successful:
+        print("Please log in...")
     while not logged_in:
         try:
             driver.find_element_by_class_name("css-wcapli")
-            print("Not logged in...")
             time.sleep(1)
         except Exception:
             logged_in = True
+            print("logged-in")
 
-def wait_for_verification():
+        print("waiting for login")
+
+def wait_for_verification(driver):
     verifying = True
+    print("Please verify your identity...")
     while verifying:
         try:
             driver.find_element_by_class_name("_1zexMpwTfW5iM-hLKSX9WX")
-            print("Verifying")
             time.sleep(1)
         except Exception:
             verifying = False
     time.sleep(1)
 
-def locate_stocks():
+def locate_stocks(driver, attempts):
     elem = find_element(driver, "_3HLJ3tNpwWnaSGO61Xz-VA", attempts)
-    print(type(elem))
+    if len(elem) == 0:
+        time.sleep(1)
+        locate_stocks(driver,attempts)
+        return
+    print(str(type(elem)) + " type")
     for something in elem:
-        print(str(something.text))
+        text = something.text
+        if "Shares" not in text:
+            index = elem.index(something) + 1
+            if len(elem) > index:
+                share = elem[index]
+                print(text, share)
 
 def find_element(driver, class_name, attempts):
     try:
